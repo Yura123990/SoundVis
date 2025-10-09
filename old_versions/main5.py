@@ -3,7 +3,7 @@ import soundfile as sf
 import matplotlib.pyplot as plt
 from scipy.fft import rfft, rfftfreq
 
-filename = "input17.wav"
+filename = "../testsounds-1/input8.wav"
 start_sec = 0.0
 duration = 5.0
 search_band = (1, 200)

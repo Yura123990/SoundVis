@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 from scipy.fft import rfft, rfftfreq
 
 # Задаю параметри
-filename = "testsounds-1/input10.wav"
+filename = "testsounds-2/60hz-range.wav"
 start_sec = 0.0           # початок фрагменту
-duration = 30.0           # довжина фрагмента в секундах
+duration = 5.0           # довжина фрагмента в секундах
 search_band = (1, 200)    # діапазон пошуку піку (Hz)
-min_periods_required = 600 # мінімальна кількість періодів для знайдення повторюваного сигналу
+min_periods_required = 200 # мінімальна кількість періодів для знайдення повторюваного сигналу
 peak_ratio_threshold = 5  # у скільки разів пік має бути вищим за середнє
 
 # 1. Зчитування файлу
