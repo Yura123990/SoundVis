@@ -1,5 +1,5 @@
 # The method of searching for acoustic signals at high noise levels
-
+#### * Important note: the sndvis-0.1 folder is the last stable version at the moment!
 In the modern world, information is often hidden not only in visible data but also in weak, almost imperceptible signals. Due to the ongoing war in Ukraine, which affects not only my country but also neighboring states, FPV-drones frequently cross international borders, which causes a serious threat to the safety of the civilian population and infrastructure. Detecting such drones early, especially when they are still far beyond the horizon, requires advanced methods for identifying extremely weak and noisy signals. My algorithm offers a potential solution by enhancing periodic patterns hidden within noise, making it applicable to real-world defense and monitoring systems.
 
 ### The signal analysis process consists of several consecutive stages.
