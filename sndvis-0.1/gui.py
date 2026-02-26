@@ -1,9 +1,14 @@
+import torch
 import sys
 from PyQt5.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout,
     QPushButton, QLabel, QLineEdit, QFileDialog, QSpinBox
 )
 from analyze import search
+from testai import predict_whole_wav, load_model
+
+model_path = "best_model.pth"
+model = load_model(model_path)
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -18,37 +23,37 @@ class MainWindow(QWidget):
         self.message_label.hide()
         layout.addWidget(self.message_label)
 
-        # --- вибір файлу ---
+        # --- file selection ---
         file_layout = QHBoxLayout()
-        self.file_label = QLabel("Файл: не вибрано")
-        file_btn = QPushButton("Вибрати файл")
+        self.file_label = QLabel("File: not selected")
+        file_btn = QPushButton("Select file")
         file_btn.clicked.connect(self.choose_file)
         file_layout.addWidget(self.file_label)
         file_layout.addWidget(file_btn)
         layout.addLayout(file_layout)
 
-        # --- початок ---
+        # --- start ---
         start_layout = QHBoxLayout()
-        start_layout.addWidget(QLabel("Початок (сек):"))
+        start_layout.addWidget(QLabel("Start (sec):"))
         self.start_input = QLineEdit()
         self.start_input.setText("0.0")
         start_layout.addWidget(self.start_input)
         layout.addLayout(start_layout)
 
-        # --- тривалість ---
+        # --- duration ---
         duration_layout = QHBoxLayout()
-        duration_layout.addWidget(QLabel("Тривалість (сек):"))
+        duration_layout.addWidget(QLabel("Duration (sec):"))
         self.duration_input = QLineEdit()
         self.duration_input.setText("5.0")
         duration_layout.addWidget(self.duration_input)
         layout.addLayout(duration_layout)
 
         band_layout = QHBoxLayout()
-        band_layout.addWidget(QLabel("Діапазон пошуку піку (Гц):"))
+        band_layout.addWidget(QLabel("Peak search range (Hz):"))
 
         self.band_min = QSpinBox()
         self.band_min.setRange(1, 500)
-        self.band_min.setValue(1)  # початкове значення
+        self.band_min.setValue(1)  # initial value
         band_layout.addWidget(self.band_min)
 
         self.band_max = QSpinBox()
@@ -58,24 +63,24 @@ class MainWindow(QWidget):
 
         layout.addLayout(band_layout)
 
-        # --- к-сть періодів ---
+        # --- number of periods ---
         periods_layout = QHBoxLayout()
-        periods_layout.addWidget(QLabel("Мінімальна к-сть періодів:"))
+        periods_layout.addWidget(QLabel("Minimum number of periods:"))
         self.periods_input = QLineEdit()
         self.periods_input.setText("10")
         periods_layout.addWidget(self.periods_input)
         layout.addLayout(periods_layout)
 
-        # --- дискретність ---
+        # --- discreteness ---
         threshold_layout = QHBoxLayout()
-        threshold_layout.addWidget(QLabel("У скільки разів пік має бути вищим за середнє:"))
+        threshold_layout.addWidget(QLabel("How many times higher than the average should the peak be:"))
         self.threshold_input = QLineEdit()
         self.threshold_input.setText("5")
         threshold_layout.addWidget(self.threshold_input)
         layout.addLayout(threshold_layout)
 
-        # --- кнопка запуску ---
-        run_btn = QPushButton("Запустити аналіз")
+        # --- start button ---
+        run_btn = QPushButton("Run analysis")
         run_btn.clicked.connect(self.search_gui)
         layout.addWidget(run_btn)
 
@@ -83,7 +88,7 @@ class MainWindow(QWidget):
 
     def choose_file(self):
         file_path, _ = QFileDialog.getOpenFileName(
-            self, "Вибери аудіофайл", "", "Audio Files (*.wav *.mp3 *.flac)"
+            self, "Choose audio file", "", "Audio Files (*.wav *.mp3 *.flac)"
         )
         if file_path:
             self.file_label.setText(file_path)
@@ -96,19 +101,20 @@ class MainWindow(QWidget):
         band = (int(self.band_min.value()), int(self.band_max.value()))
         period = int(self.periods_input.text())
         threshold = int(self.threshold_input.text())
-        if not file or "не вибрано" in file:
+        if not file or "not selected" in file:
             self.message_label.setStyleSheet("color: red;")
-            self.message_label.setText("Спочатку виберіть файл!")
+            self.message_label.setText("Select a file first!")
             self.message_label.show()
             return
         try:
             search(file, start, duration, band, period, threshold)
+            prob, freq = predict_whole_wav(file, model, start, duration=duration)
             self.message_label.setStyleSheet("color: green;")
-            self.message_label.setText("Аналіз виконано успішно!")
+            self.message_label.setText("The analysis was successful!")
             self.message_label.show()
         except Exception as e:
             self.message_label.setStyleSheet("color: red;")
-            self.message_label.setText(f"Помилка: {str(e)}")
+            self.message_label.setText(f"Error: {str(e)}")
             self.message_label.show()
 
 

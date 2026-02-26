@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from scipy.fft import rfft, rfftfreq
 
 def search(filename, start_sec, duration, search_band, min_periods_required, peak_ratio_threshold):
-    # 1. Зчитування файлу
+    # 1. Reading a file
     data, fs = sf.read(filename)
     if data.ndim > 1:
         data = data.mean(axis=1)
@@ -13,14 +13,14 @@ def search(filename, start_sec, duration, search_band, min_periods_required, pea
     N = int(duration * fs)
     frag = data[start_sample:start_sample + N].astype(float)
 
-    # 2. Перетворення сигналу у FFT
+    # 2. Signal conversion in FFT
     X = np.abs(rfft(frag))
     freqs = rfftfreq(len(frag), 1 / fs)
 
-    # 3. Пошук піку у заданому діапазоні
+    # 3. Searching for a peak in a specified range
     mask = (freqs >= search_band[0]) & (freqs <= search_band[1])
     if not np.any(mask):
-        raise ValueError("У заданому діапазоні немає частот для аналізу!")
+        raise ValueError("There are no frequencies for analysis in the specified range!")
 
     X_band = X[mask]
     f_band = freqs[mask]
@@ -29,49 +29,44 @@ def search(filename, start_sec, duration, search_band, min_periods_required, pea
     f_peak = f_band[peak_idx]
     amp_peak = X_band[peak_idx]
 
-    # критерій: пік має значно перевищувати середнє по діапазону
     mean_amp = np.mean(X_band)
     if amp_peak < peak_ratio_threshold * mean_amp:
         f_peak = None
+        print("No peak")
     else:
-        print(f"Виявлено повторюваний сигнал, пікова частота ≈ {f_peak:.2f} Hz")
+        print(f"Repetitive signal detected, peak frequency ≈ {f_peak:.2f} Hz")
 
-    # 4. Якщо сигнал знайдено — усереднення періоду і графіки
     if f_peak is not None and f_peak > 0:
         samples_per_period = int(round(fs / f_peak))
         num_periods = len(frag) // samples_per_period
 
         if num_periods < min_periods_required:
-            print("Недостатньо періодів для впевненого повторення.")
+            print("Not enough periods for confident repetition.")
         else:
-            # Накладення шматків
             stack = np.zeros(samples_per_period)
             for i in range(num_periods):
                 chunk = frag[i * samples_per_period:(i + 1) * samples_per_period]
                 stack += chunk
-            stack /= num_periods  # усереднення
+            stack /= num_periods
 
-            # Візуалізація
             plt.figure(figsize=(10, 6))
 
-            # верхній графік — спектр
             plt.subplot(2, 1, 1)
             plt.semilogy(f_band, X_band)
             plt.axvline(f_peak, color='r', linestyle='--', label=f'peak ≈ {f_peak:.2f} Hz')
-            plt.xlabel("Частота, Hz")
-            plt.ylabel("Амплітуда")
-            plt.title("Спектр (FFT)")
+            plt.xlabel("Frequency, Hz")
+            plt.ylabel("Amplitude")
+            plt.title("Spectrum (FFT)")
             plt.legend()
             plt.grid(True)
 
-            # нижній графік — накладений сигнал
             plt.subplot(2, 1, 2)
             t = np.arange(samples_per_period) / fs
             plt.plot(t, stack)
-            plt.xlabel("Час, s (1 період)")
-            plt.ylabel("Амплітуда")
-            plt.title("Накладений сигнал (усереднений період)")
+            plt.xlabel("Time, s (1 period)")
+            plt.ylabel("Amplitude")
+            plt.title("Applied signal (averaged period)")
             plt.grid(True)
 
             plt.tight_layout()
-            plt.show()
+            plt.show(block=False)
